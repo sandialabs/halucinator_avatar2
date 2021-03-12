@@ -36,7 +36,7 @@ git submodule update --init dtc
 
 mkdir -p ../../build/qemu/
 cd ../../build/qemu
-../../src/avatar-qemu/configure --disable-sdl --target-list=arm-softmmu 
+../../src/avatar-qemu/configure --disable-sdl --target-list=arm-softmmu,aarch64-softmmu
 
 make -j $QEMU_NPROC
 

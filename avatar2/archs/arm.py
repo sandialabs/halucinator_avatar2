@@ -4,6 +4,7 @@ from capstone import *
 from keystone.keystone_const import *
 from unicorn import *
 from unicorn.arm_const import *
+from unicorn.arm64_const import *
 from .architecture import Architecture
 import avatar2
 
@@ -90,3 +91,32 @@ ARMV7M = ARM_CORTEX_M3
 class ARMBE(ARM):
     qemu_name = 'armeb'
     capstone_mode = CS_MODE_BIG_ENDIAN
+
+
+class ARM64(Architecture):
+    get_qemu_executable = Architecture.resolve(QEMU)
+    get_panda_executable = Architecture.resolve(PANDA)
+    get_gdb_executable  = Architecture.resolve(GDB_ARM)
+    get_oocd_executable = Architecture.resolve(OPENOCD)
+
+    qemu_name = 'arm64'
+    gdb_name = 'aarch64'
+    registers = {'x0': 0, 'x1': 1, 'x2': 2, 'x3': 3, 'x4': 4, 'x5': 5, 'x6': 6,
+                 'x7': 7, 'x8': 8, 'x9': 9, 'x10': 10, 'x11': 11, 'x12': 12,
+                 'sp': 13, 'lr': 14, 'pc': 15, 'nzcv': 25,
+                 }
+    unicorn_registers = {'x0' : UC_ARM64_REG_X0,  'x1'  : UC_ARM64_REG_X1,  'x2' : UC_ARM64_REG_X2,
+                         'x3' : UC_ARM64_REG_X3,  'x4'  : UC_ARM64_REG_X4,  'x5' : UC_ARM64_REG_X5,
+                         'x6' : UC_ARM64_REG_X6,  'x7'  : UC_ARM64_REG_X7,  'x8' : UC_ARM64_REG_X8,
+                         'x9' : UC_ARM64_REG_X9,  'x10' : UC_ARM64_REG_X10, 'x11': UC_ARM64_REG_X11,
+                         'x12': UC_ARM64_REG_X12, 'sp'  : UC_ARM64_REG_SP,  'lr' : UC_ARM64_REG_LR,
+                         'pc' : UC_ARM64_REG_PC,  'nzcv': UC_ARM64_REG_NZCV}
+    pc_name = 'pc'
+    sr_name = 'nzcv'
+    unemulated_instructions = ['mcr', 'mrc']
+    capstone_arch = CS_ARCH_ARM64
+    capstone_mode = CS_MODE_LITTLE_ENDIAN
+    keystone_arch = KS_ARCH_ARM64
+    #keystone_mode = KS_MODE_ARM
+    unicorn_arch = UC_ARCH_ARM64
+    unicorn_mode = UC_MODE_ARM
