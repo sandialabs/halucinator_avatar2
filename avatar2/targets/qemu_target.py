@@ -36,7 +36,7 @@ class QemuTarget(Target):
 
         # Qemu parameters
         self.system_clock_scale = system_clock_scale
-        if hasattr(self, "executable") is False and self.__class__ == QemuTarget:
+        if hasattr(self, "executable") is False and issubclass(self.__class__, QemuTarget):
             self.executable = (
                 executable
                 if executable is not None
@@ -86,7 +86,7 @@ class QemuTarget(Target):
             )
 
         machine = ["-machine", "configurable"]
-        kernel = ["-kernel", self.qemu_config_file]
+        avatar_config = ["-avatar-config", self.qemu_config_file]
         gdb_option = ["-gdb", "tcp::" + str(self.gdb_port)]
         stop_on_startup = ["-S"]
         nographic = ["-nographic"]  # , "-monitor", "/dev/null"]
@@ -95,7 +95,7 @@ class QemuTarget(Target):
         cmd_line = (
             executable_name
             + machine
-            + kernel
+            + avatar_config
             + gdb_option
             + stop_on_startup
             + self.additional_args
