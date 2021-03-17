@@ -16,7 +16,7 @@ else:
 
 from avatar2.archs.arm import ARM
 from avatar2.targets import TargetStates
-from avatar2.message import AvatarMessage, UpdateStateMessage, BreakpointHitMessage, SyscallCatchedMessage
+from avatar2.message import AvatarMessage, UpdateStateMessage, BreakpointHitMessage, SyscallCatchedMessage, WatchpointHitMessage
 
 GDB_PROT_DONE = 'done'
 GDB_PROT_CONN = 'connected'
@@ -80,6 +80,13 @@ class GDBResponseListener(Thread):
         payload = response['payload']
         avatar_msg = None
 
+        if "wpt" in payload.keys():
+            key = "wpt"
+        elif "hw-awpt" in payload.keys():
+            key = "hw-awpt"
+        elif "hw-rwpt" in payload.keys():
+            key = "hw-rwpt"
+
         self.log.debug("Received Message: %s", msg)
 
         if msg.startswith('thread'):
@@ -117,14 +124,14 @@ class GDBResponseListener(Thread):
                     avatar_msg = UpdateStateMessage(
                         self._origin, TargetStates.STOPPED)
             elif payload.get('reason') == 'watchpoint-trigger':
-                avatar_msg = UpdateStateMessage(
-                    self._origin, TargetStates.STOPPED)
+                avatar_msg = WatchpointHitMessage(self._origin, payload[key]["number"],
+                                                  int(payload['frame']['addr'], 16))
             elif payload.get('reason') == 'access-watchpoint-trigger':
-                avatar_msg = UpdateStateMessage(
-                    self._origin, TargetStates.STOPPED)
+                avatar_msg = WatchpointHitMessage(self._origin, payload[key]["number"],
+                                                  int(payload['frame']['addr'], 16))
             elif payload.get('reason') == 'read-watchpoint-trigger':
-                avatar_msg = UpdateStateMessage(
-                    self._origin, TargetStates.STOPPED)
+                avatar_msg = WatchpointHitMessage(self._origin, payload[key]["number"],
+                                                  int(payload['frame']['addr'], 16))
             elif payload.get('reason') == 'syscall-entry':
                 avatar_msg = SyscallCatchedMessage(self._origin, int(payload['bkptno']),
                                                   int(payload['frame']['addr'], 16), 'entry')

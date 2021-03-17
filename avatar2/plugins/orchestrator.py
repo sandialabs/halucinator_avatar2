@@ -154,6 +154,8 @@ def load_plugin(avatar):
                                  callback=transition_callback)
     avatar.watchmen.add_watchman('UpdateState', when=AFTER,
                                  callback=update_state_callback)
+    avatar.watchmen.add_watchman('WatchpointHit', when=AFTER,
+                                 callback=transition_callback)
 
     avatar.add_transition = MethodType(add_transition, avatar)
     avatar.enable_transitions = MethodType(enable_transitions, avatar)

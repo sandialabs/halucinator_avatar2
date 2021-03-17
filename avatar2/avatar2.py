@@ -96,6 +96,7 @@ class Avatar(Thread):
         self.message_handlers = {
             SyscallCatchedMessage: self._handle_syscall_catched_message,
             BreakpointHitMessage: self._handle_breakpoint_hit_message,
+            WatchpointHitMessage: self._handle_watchpoint_hit_message,
             UpdateStateMessage: self._handle_update_state_message,
             RemoteMemoryReadMessage: self._handle_remote_memory_read_message,
             RemoteMemoryWriteMessage: self._handle_remote_memory_write_message,
@@ -413,6 +414,12 @@ class Avatar(Thread):
         # Note: This can break if another breakpoint-hit callback inserts an
         #       additional breakpointhit-watchmen (after).
         w = self.watchmen.add("BreakpointHit", when="after", callback=bp_end_sync_cb)
+
+    @watch('WatchpointHit')
+    def _handle_watchpoint_hit_message(self, message):
+        self.log.info("Watchpoint hit for Target: %s" % message.origin.name)
+        self._handle_update_state_message(message)
+
 
     @watch("SyscallCatched")
     def _handle_syscall_catched_message(self, message):

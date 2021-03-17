@@ -23,6 +23,12 @@ class BreakpointHitMessage(UpdateStateMessage):
         self.breakpoint_number = breakpoint_number
         self.address = address
 
+class WatchpointHitMessage(UpdateStateMessage):
+    def __init__(self, origin, watchpoint_number, address):
+        super(self.__class__, self).__init__(origin, TargetStates.STOPPED)
+        self.watchpoint_number = watchpoint_number
+        self.address = address
+
 class SyscallCatchedMessage(BreakpointHitMessage):
     def __init__(self, origin, breakpoint_number, address, type='entry'):
         super(self.__class__, self).__init__(origin, breakpoint_number, address)
