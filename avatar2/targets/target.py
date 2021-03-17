@@ -223,12 +223,13 @@ class Target(object):
 
         self.regs = TargetRegs(self, self._arch.registers)
 
-    def dictify(self):
+    def dictify(self, ignore=None):
         """
         Returns the memory range as *printable* dictionary for the config
         """
 
-        ignore = ['state', 'status', 'regs', 'protocols', 'log', 'avatar']
+        if ignore is None:
+            ignore = ['state', 'status', 'regs', 'protocols', 'log', 'avatar']
         ignored_types = (MethodType)
         expected_types = (str, bool, int, list) 
         if version_info < (3, 0): expected_types += (unicode, )
