@@ -30,6 +30,7 @@ class QemuTarget(Target):
         log_items=None,
         log_file=None,
         system_clock_scale=None,
+        qmp_unix_socket=None,
         **kwargs
     ):
         super(QemuTarget, self).__init__(avatar, **kwargs)
@@ -59,6 +60,7 @@ class QemuTarget(Target):
         self.gdb_verbose = gdb_verbose
 
         self.qmp_port = qmp_port
+        self.qmp_unix_socket = qmp_unix_socket
 
         self._process = None
         self._entry_address = entry_address
@@ -90,7 +92,10 @@ class QemuTarget(Target):
         gdb_option = ["-gdb", "tcp::" + str(self.gdb_port)]
         stop_on_startup = ["-S"]
         nographic = ["-nographic"]  # , "-monitor", "/dev/null"]
-        qmp = ["-qmp", "tcp:127.0.0.1:%d,server,nowait" % self.qmp_port]
+        if self.qmp_unix_socket is not None:
+            qmp = ["-qmp", "unix:%s,server,nowait" % self.qmp_unix_socket]
+        else:
+            qmp = ["-qmp", "tcp:127.0.0.1:%d,server,nowait" % self.qmp_port]
 
         cmd_line = (
             executable_name
@@ -274,7 +279,7 @@ class QemuTarget(Target):
             avatar=self.avatar,
             origin=self,
         )
-        qmp = QMPProtocol(self.qmp_port, origin=self)
+        qmp = QMPProtocol(self.qmp_port, origin=self, unix_socket=self.qmp_unix_socket)
 
         if "avatar-rmemory" in [
             i[2].qemu_name

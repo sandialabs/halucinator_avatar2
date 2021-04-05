@@ -13,8 +13,48 @@ import re
 from avatar2 import archs
 
 
+
+import socket
+ 
+class UnixSocket:
+
+
+    def __init__(self,file):
+
+        self.buff = ""
+        self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._socket.connect(file)
+
+    def read(self, length = 1024):
+
+        """ Read 1024 bytes off the socket """
+
+        return self._socket.recv(length)
+ 
+    def read_until(self, data):
+
+        """ Read data into the buffer until we have data """
+
+        while not data in self.buff:
+            self.buff += self._socket.recv(1024).decode('ascii')
+ 
+        pos = self.buff.find(data)
+        rval = self.buff[:pos + len(data)]
+        self.buff = self.buff[pos + len(data):]
+ 
+        return rval
+ 
+    def write(self, data):
+
+        self._socket.send(data)
+    
+    def close(self):
+
+        self._socket.close()
+
+
 class QMPProtocol(object):
-    def __init__(self, port, origin=None):
+    def __init__(self, port, origin=None, unix_socket=None):
 
         self.port = port
         self.log = logging.getLogger('%s.%s' %
@@ -23,13 +63,18 @@ class QMPProtocol(object):
             logging.getLogger(self.__class__.__name__)
         self.origin=origin
         self.id = 0
+        self.unix_socket = unix_socket
 
     def __del__(self):
         self.shutdown()
 
     def connect(self):
-        self._telnet = telnetlib.Telnet('127.0.0.1', self.port)
-        self._telnet.read_until('\r\n'.encode('ascii'))
+        if self.unix_socket is not None:
+            self._socket = UnixSocket(self.unix_socket)
+            resp = self._socket.read_until("\r\n");
+        else:
+            self._socket = telnetlib.Telnet('127.0.0.1', self.port)
+            resp = self._socket.read_until('\r\n'.encode('ascii'))
         self.execute_command('qmp_capabilities')
         return True
 
@@ -39,12 +84,18 @@ class QMPProtocol(object):
         if args:
             command['arguments'] = args
         command['id'] = self.id
-        self._telnet.write(('%s\r\n' % json.dumps(command)).encode('ascii'))
+        self._socket.write(('%s\r\n' % json.dumps(command)).encode('ascii'))
 
         while True:
-            resp = self._telnet.read_until('\r\n'.encode('ascii'))
-            self.log.info(resp)
-            resp = json.loads(resp.decode('ascii'))
+            if self.unix_socket is not None:
+                resp = self._socket.read_until('\r\n')
+                self.log.info("Received: %s" % resp)
+                resp = json.loads(resp)
+            else: 
+                resp = self._socket.read_until('\r\n'.encode('ascii'))
+                self.log.info("Received: %s" % resp)
+                resp = json.loads(resp.decode('ascii'))
+
             if 'event' in resp:
                 continue
             if 'id' in resp:
