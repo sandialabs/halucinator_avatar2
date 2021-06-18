@@ -667,7 +667,7 @@ class GDBProtocol(object):
         num2fmt = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
 
         max_read_size = 0x100
-        raw_mem = b''
+        raw_mem_list = []
         for i in range(0, wordsize * num_words, max_read_size):
             to_read = max_read_size if wordsize * num_words > i + max_read_size - 1 else \
                 wordsize * num_words % max_read_size
@@ -682,8 +682,9 @@ class GDBProtocol(object):
 
             # the indirection over the bytearray is needed for legacy python support
             read_mem = bytearray.fromhex(resp['payload']['memory'][0]['contents'])
-            raw_mem += bytes(read_mem)
+            raw_mem_list.append(read_mem)
 
+        raw_mem = b''.join(raw_mem_list) # Only do one copy
         if raw:
             return raw_mem
         else:
