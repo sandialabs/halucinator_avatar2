@@ -33,6 +33,7 @@ git submodule update --init avatar-qemu
 
 cd avatar-qemu
 git submodule update --init dtc
+git checkout master
 
 mkdir -p ../../build/qemu/
 cd ../../build/qemu
