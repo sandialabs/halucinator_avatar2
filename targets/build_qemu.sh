@@ -29,7 +29,7 @@ else
 fi
 
 cd `dirname "$BASH_SOURCE"`/src/
-git submodule update --init avatar-qemu 
+# git submodule update --init avatar-qemu 
 
 cd avatar-qemu
 git submodule update --init dtc
