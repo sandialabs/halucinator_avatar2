@@ -12,7 +12,7 @@ then
         echo "[WARNING] This script is about to add '$repo' to $apt_src"
         read -p "Do you want to continue? (Yes/No) " cont
         case $cont in
-            Yes|yes|Y|y )
+            Yes|yes|Y|y ) 
                 sudo bash -c "echo '$repo' >> $apt_src"
                 echo "Continuing installation..."
                 ;;
@@ -28,17 +28,14 @@ else
     echo "You may have to install dependencies manually"
 fi
 
-cd `dirname "$BASH_SOURCE"`/src/
-git submodule update --init avatar-qemu
-
-cd avatar-qemu
-git submodule update --init dtc
-# git checkout master
+cd `dirname "$BASH_SOURCE"`/src/avatar-qemu
+git submodule update --init
+git checkout dev/qemu-6.2
 
 mkdir -p ../../build/qemu/
 cd ../../build/qemu
 ../../src/avatar-qemu/configure --disable-sdl \
-   --target-list=arm-softmmu,aarch64-softmmu,ppc-softmmu
+ --target-list=arm-softmmu,aarch64-softmmu,ppc-softmmu
 
-make -j $QEMU_NPROC
+ninja
 

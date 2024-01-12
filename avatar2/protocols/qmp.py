@@ -9,6 +9,7 @@ import logging
 import json
 import telnetlib
 import re
+import threading
 
 from avatar2 import archs
 
@@ -64,6 +65,7 @@ class QMPProtocol(object):
         self.origin=origin
         self.id = 0
         self.unix_socket = unix_socket
+        self.lock = threading.Lock()
 
     def __del__(self):
         self.shutdown()
@@ -79,35 +81,37 @@ class QMPProtocol(object):
         return True
 
     def execute_command(self, cmd, args=None):
-        command = {}
-        command['execute'] = cmd
-        if args:
-            command['arguments'] = args
-        command['id'] = self.id
-        self._socket.write(('%s\r\n' % json.dumps(command)).encode('ascii'))
+        with self.lock:
+            command = {}
+            command['execute'] = cmd
+            if args:
+                command['arguments'] = args
+            command['id'] = self.id
+        
+            self._socket.write(('%s\r\n' % json.dumps(command)).encode('ascii'))
 
-        while True:
-            if self.unix_socket is not None:
-                resp = self._socket.read_until('\r\n')
-                self.log.info("Received: %s" % resp)
-                resp = json.loads(resp)
-            else: 
-                resp = self._socket.read_until('\r\n'.encode('ascii'))
-                self.log.info("Received: %s" % resp)
-                resp = json.loads(resp.decode('ascii'))
+            while True:
+                if self.unix_socket is not None:
+                    resp = self._socket.read_until('\r\n')
+                    self.log.info("Received: %s" % resp)
+                    resp = json.loads(resp)
+                else: 
+                    resp = self._socket.read_until('\r\n'.encode('ascii'))
+                    self.log.info("Received: %s" % resp)
+                    resp = json.loads(resp.decode('ascii'))
 
-            if 'event' in resp:
-                continue
-            if 'id' in resp:
-                break
-        if resp['id'] != self.id:
-            raise Exception('Mismatching id for qmp response')
-        self.id += 1
-        if 'error' in resp:
-            return resp['error']
-        if 'return' in resp:
-            return resp['return']
-        raise Exception("Response contained neither an error nor an return")
+                if 'event' in resp:
+                    continue
+                if 'id' in resp:
+                    break
+            if resp['id'] != self.id:
+                raise Exception('Mismatching id for qmp response')
+            self.id += 1
+            if 'error' in resp:
+                return resp['error']
+            if 'return' in resp:
+                return resp['return']
+            raise Exception("Response contained neither an error nor an return")
 
     def reset(self):
         """

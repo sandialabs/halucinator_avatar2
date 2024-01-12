@@ -31,6 +31,7 @@ class QemuTarget(Target):
         log_file=None,
         system_clock_scale=None,
         qmp_unix_socket=None,
+        machine=None,
         **kwargs
     ):
         super(QemuTarget, self).__init__(avatar, **kwargs)
@@ -43,6 +44,8 @@ class QemuTarget(Target):
                 if executable is not None
                 else self._arch.get_qemu_executable()
             )
+
+        self.machine = machine
         self.fw = firmware
         self.cpu_model = cpu_model
         self.entry_address = entry_address
@@ -86,9 +89,12 @@ class QemuTarget(Target):
             raise Exception(
                 "Executable for %s not found: %s" % (self.name, self.executable)
             )
-
-        machine = ["-machine", "configurable"]
-        avatar_config = ["-avatar-config", self.qemu_config_file]
+        if self.machine is None or self.machine == 'configurable':
+            machine = ["-machine", "configurable"]
+            avatar_config = ["-avatar-config", self.qemu_config_file]
+        else:
+            machine = ["-machine", self.machine]
+            avatar_config = []  # Going to use QEMU's config to create machine
         gdb_option = ["-gdb", "tcp::" + str(self.gdb_port)]
         stop_on_startup = ["-S"]
         nographic = ["-nographic"]  # , "-monitor", "/dev/null"]

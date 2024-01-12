@@ -176,6 +176,7 @@ class Avatar(Thread):
             if isinstance(range.data.forwarded_to, AvatarPeripheral):
                 range.data.forwarded_to.shutdown()
         self.shutdowned = True
+        atexit.unregister(self.shutdown)
 
     def sigint_wrapper(self, signal, frame):
         self.log.info("Avatar Received SIGINT")
@@ -553,6 +554,7 @@ class AvatarFastQueueProcessor(Thread):
         self.message_handlers = {
             UpdateStateMessage: self._fast_handle_update_state_message,
             BreakpointHitMessage: self._fast_handle_update_state_message,
+            WatchpointHitMessage: self._fast_handle_update_state_message,
             SyscallCatchedMessage: self._fast_handle_update_state_message,
         }
 

@@ -101,6 +101,8 @@ class GDBResponseListener(Thread):
             pass  # ignore breakpoint modified for now
         elif msg == 'breakpoint-created':
             pass  # ignore breakpoint created for now
+        elif msg == 'breakpoint-deleted':
+            pass  # ignore breakpoint deletion for now
         elif msg == 'memory-changed':
             pass  # ignore changed memory for now
         elif msg == 'stopped':
@@ -368,8 +370,9 @@ class GDBProtocol(object):
             self.log.critical(
                 "Unable to set architecture, received response: %s" %
                 resp)
-            raise Exception(("GDBProtocol was unable to set the architecture\n"
-                             "Did you select the right gdb_executable?"))
+            raise Exception((f"GDBProtocol was unable to set the architecture "
+                             f"to {self._arch.gdb_name}\n"
+                             f"Did you select the right gdb_executable?"))
 
         # if we are on ARM, set abi to AAPPCS to avoid bugs due to
         # fp-derefencation (https://github.com/avatartwo/avatar2/issues/19)
@@ -485,7 +488,15 @@ class GDBProtocol(object):
         """
         if hasattr(self._origin, 'regs'):
             regs = self.get_register_names()
-            regs_dict = dict([(r,i) for i, r in enumerate(regs) if r != ''])
+            regs_dict = {}
+            # Regs may have duplicates e.g. LR may appear twice first will be
+            # lr second will be lr_#idx
+            for i, r in enumerate(regs):
+                if r != '':
+                    if r not in regs_dict:
+                        regs_dict[r] = i
+                    else:
+                        regs_dict[f"{r}_{i}"] = i
             self._origin.regs._update(regs_dict)
 
 
